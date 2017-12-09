@@ -32,7 +32,7 @@ sudo apt-get -y install clang-3.7 libc++-dev libc++abi-dev
 sudo apt-get -y install cmake
 sudo apt-get -y install libopenblas-dev liblapack-dev
 sudo apt-get -y install git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
-sudo apt-get -y install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libjasper-dev libdc1394-22-dev checkinstall
+sudo apt-get -y install python-dev python-numpy libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff5-dev libjasper-dev libdc1394-22-dev checkinstall
 echo "Essential dependencies installed."
 
 # OpenCV Dependency
@@ -43,7 +43,7 @@ cd opencv-3.1.0
 mkdir -p build
 cd build
 echo "Installing OpenCV..."
-cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_TBB=ON -D BUILD_SHARED_LIBS=OFF ..
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=~/usr -D WITH_TBB=ON -D BUILD_SHARED_LIBS=OFF ..
 make -j4
 sudo make install
 cd ../..
