@@ -51,6 +51,11 @@
 
 // LSL includes
 #include "lsl_cpp.h"
+// pick a sampling rate that *should* match the webcam FPS
+// FIXME: configure
+#define LSL_SR  30
+// in chans: decetion certainty, then position and orientatin for each eye
+#define LSL_NB_CHANS 13
 
 #define INFO_STREAM( stream ) \
 std::cout << stream << std::endl
@@ -148,27 +153,62 @@ void visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& f
 	}
 }
 
+
+// Exporting to lsl 
+void stream_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy, stream_outlet *outlet)
+{
+
+	// have to assume 13 channels at the moment
+	assert(LSL_NB_CHANS == 13); 
+
+	float sample[LSL_NB_CHANS];
+	// sample[0]: detection_certainty
+	// sample[1..3]: gazeDirection0
+	// sample[4..6]: gazeDirection1
+	// sample[7..9]: pos?
+	// sample[10..12]: pos?
+
+	// init
+	for (int i = 0; i < LSL_NB_CHANS; i++) {
+          sample[i] = 0;
+	}
+
+	double detection_certainty = face_model.detection_certainty;
+	sample[0] = detection_certainty;
+	bool detection_success = face_model.detection_success;
+
+	// Only get data if got detection
+	if (det_parameters.track_gaze && detection_success && face_model.eye_model)
+	{
+	  sample[1] = gazeDirection0.x;
+	  sample[2] = gazeDirection0.y;
+	  sample[3] = gazeDirection0.z;
+	  sample[4] = gazeDirection1.x;
+	  sample[5] = gazeDirection1.y;
+	  sample[6] = gazeDirection1.z;
+
+	  //GazeAnalysis::DrawGaze(captured_image, face_model, gazeDirection0, gazeDirection1, fx, fy, cx, cy);
+	}
+
+        //cout << "Detection certainty: "  << detection_certainty << endl;
+        cout << "sample: "  << sample[0];
+	for (int i = 1; i < LSL_NB_CHANS; i++) {
+          cout << ", " << sample[i];
+
+	}
+        cout << endl;
+
+        // send it
+	outlet->push_sample(sample);
+}
+
+
 int main (int argc, char **argv)
 {
 	// make a new stream_info and open an outlet with it
         cout << "Creating LSL stream" << endl; 
-	stream_info info("OpenFace","gaze", 128);
+	stream_info info("OpenFace","gaze", LSL_NB_CHANS, LSL_SR);
 	stream_outlet outlet(info);
-
-	float sample[128];
-
-	while(true) {
-		// generate random data
-                for (int c=0;c<128;c++) {
-			sample[c] = (rand()%1500)/500.0f-1.5f;
-			cout << sample[c]<< ","; 
-		}
-		cout << endl; 
-		// send it
-		outlet.push_sample(sample);
-	}
-        cout << "End push LSL stream" << endl; 
-
 
 	vector<string> arguments = get_arguments(argc, argv);
 
@@ -322,6 +362,8 @@ int main (int argc, char **argv)
 			// Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
 			double detection_certainty = clnf_model.detection_certainty;
 
+
+
 			// Gaze tracking, absolute gaze direction
 			cv::Point3f gazeDirection0(0, 0, -1);
 			cv::Point3f gazeDirection1(0, 0, -1);
@@ -333,6 +375,8 @@ int main (int argc, char **argv)
 			}
 
 			visualise_tracking(captured_image, clnf_model, det_parameters, gazeDirection0, gazeDirection1, frame_count, fx, fy, cx, cy);
+
+			stream_tracking(captured_image, clnf_model, det_parameters, gazeDirection0, gazeDirection1, frame_count, fx, fy, cx, cy, &outlet);
 			
 			// output the tracked video
 			if (!output_video_files.empty())
