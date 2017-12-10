@@ -155,7 +155,7 @@ void visualise_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& f
 
 
 // Exporting to lsl 
-void stream_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, int frame_count, double fx, double fy, double cx, double cy, stream_outlet *outlet)
+void stream_tracking(const LandmarkDetector::CLNF& face_model, const LandmarkDetector::FaceModelParameters& det_parameters, cv::Point3f gazeDirection0, cv::Point3f gazeDirection1, cv::Point3f eyeballCentre0, cv::Point3f eyeballCentre1, stream_outlet *outlet)
 {
 
 	// have to assume 13 channels at the moment
@@ -165,8 +165,8 @@ void stream_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face
 	// sample[0]: detection_certainty
 	// sample[1..3]: gazeDirection0
 	// sample[4..6]: gazeDirection1
-	// sample[7..9]: pos?
-	// sample[10..12]: pos?
+	// sample[7..9]: eyeballCentre0
+	// sample[10..12]: eyeballCentre1
 
 	// init
 	for (int i = 0; i < LSL_NB_CHANS; i++) {
@@ -187,7 +187,12 @@ void stream_tracking(cv::Mat& captured_image, const LandmarkDetector::CLNF& face
 	  sample[5] = gazeDirection1.y;
 	  sample[6] = gazeDirection1.z;
 
-	  //GazeAnalysis::DrawGaze(captured_image, face_model, gazeDirection0, gazeDirection1, fx, fy, cx, cy);
+	  sample[7] = eyeballCentre0.x;
+	  sample[8] = eyeballCentre0.y;
+	  sample[9] = eyeballCentre0.z;
+	  sample[10] = eyeballCentre1.x;
+	  sample[11] = eyeballCentre1.y;
+	  sample[12] = eyeballCentre1.z;
 	}
 
         //cout << "Detection certainty: "  << detection_certainty << endl;
@@ -362,21 +367,22 @@ int main (int argc, char **argv)
 			// Drawing the facial landmarks on the face and the bounding box around it if tracking is successful and initialised
 			double detection_certainty = clnf_model.detection_certainty;
 
-
-
 			// Gaze tracking, absolute gaze direction
-			cv::Point3f gazeDirection0(0, 0, -1);
-			cv::Point3f gazeDirection1(0, 0, -1);
+			cv::Point3f gazeDirection0(0, 0, 0);
+			cv::Point3f gazeDirection1(0, 0, 0);
+			// Retrieve eyeballs' centre
+			cv::Point3f eyeballCentre0(0, 0, 0);
+			cv::Point3f eyeballCentre1(0, 0, 0);
 
 			if (det_parameters.track_gaze && detection_success && clnf_model.eye_model)
 			{
-				GazeAnalysis::EstimateGaze(clnf_model, gazeDirection0, fx, fy, cx, cy, true);
-				GazeAnalysis::EstimateGaze(clnf_model, gazeDirection1, fx, fy, cx, cy, false);
+			  GazeAnalysis::EstimateGaze(clnf_model, gazeDirection0, eyeballCentre0,  fx, fy, cx, cy, true);
+			  GazeAnalysis::EstimateGaze(clnf_model, gazeDirection1, eyeballCentre1, fx, fy, cx, cy, false);
 			}
 
 			visualise_tracking(captured_image, clnf_model, det_parameters, gazeDirection0, gazeDirection1, frame_count, fx, fy, cx, cy);
 
-			stream_tracking(captured_image, clnf_model, det_parameters, gazeDirection0, gazeDirection1, frame_count, fx, fy, cx, cy, &outlet);
+			stream_tracking(clnf_model, det_parameters, gazeDirection0, gazeDirection1, eyeballCentre0, eyeballCentre1, &outlet);
 			
 			// output the tracked video
 			if (!output_video_files.empty())
