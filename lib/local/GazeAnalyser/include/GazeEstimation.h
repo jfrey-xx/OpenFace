@@ -41,8 +41,13 @@
 
 namespace GazeAnalysis
 {
-
+	
+	
+	// original version, retrieve vector for gaze
 	void EstimateGaze(const LandmarkDetector::CLNF& clnf_model, cv::Point3f& gaze_absolute, float fx, float fy, float cx, float cy, bool left_eye);
+	// here get as well eyeball position
+	void EstimateGaze(const LandmarkDetector::CLNF& clnf_model, cv::Point3f& gaze_absolute, cv::Point3f& eyeball_centre, float fx, float fy, float cx, float cy, bool left_eye);
+
 	void DrawGaze(cv::Mat img, const LandmarkDetector::CLNF& clnf_model, cv::Point3f gazeVecAxisLeft, cv::Point3f gazeVecAxisRight, float fx, float fy, float cx, float cy);
 
 	// Getting the gaze angle in radians with respect to the world coordinates (camera plane), when looking ahead straight at camera plane the gaze angle will be (0,0)
