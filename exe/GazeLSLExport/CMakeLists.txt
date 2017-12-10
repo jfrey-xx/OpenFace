@@ -5,6 +5,8 @@ include_directories(${TBB_ROOT_DIR}/include)
 include_directories(${LandmarkDetector_SOURCE_DIR}/include)
 	
 include_directories(../../lib/local/LandmarkDetector/include)
+include_directories(../../lib/local/FaceAnalyser/include)		
+include_directories(../../lib/local/GazeAnalyser/include)		
 
 # LSL
 INCLUDE_DIRECTORIES(../../lib/3rdParty/lsl/include)
@@ -16,6 +18,9 @@ LINK_DIRECTORIES(${LSL_LIB_DIR})
 
 add_executable(GazeLSLExport GazeLSLExport.cpp)
 target_link_libraries(GazeLSLExport LandmarkDetector)
+target_link_libraries(GazeLSLExport FaceAnalyser)
+target_link_libraries(GazeLSLExport GazeAnalyser)
+
 target_link_libraries(GazeLSLExport dlib)
 TARGET_LINK_LIBRARIES(GazeLSLExport lsl)
 
